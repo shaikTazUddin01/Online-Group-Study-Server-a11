@@ -31,7 +31,12 @@ async function run() {
             console.log(result)
             res.send(result)
         })
-      
+        app.get('/createAssignment', async (req, res) => {
+            const result = await onlineStudyCollection.find().toArray();
+            console.log(result)
+            res.send(result)
+        })
+
 
 
         // await client.db("admin").command({ ping: 1 });
