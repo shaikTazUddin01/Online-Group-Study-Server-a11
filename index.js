@@ -24,6 +24,7 @@ async function run() {
         // await client.connect();
         // create connection dataBase and collection;
         const onlineStudyCollection = client.db('onlineStudy').collection('assignment')
+        const takeAssignmentCollection = client.db('onlineStudy').collection('takeAssignment')
 
         app.post('/createAssignment', async (req, res) => {
             const newAssignment = req.body;
@@ -43,7 +44,7 @@ async function run() {
             console.log(result)
             res.send(result)
         })
-       
+
         app.delete('/createAssignment/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
@@ -82,8 +83,8 @@ async function run() {
                 const result = await onlineStudyCollection.find().toArray();
                 console.log(result)
                 res.send(result)
-                
-            }else{
+
+            } else {
                 const result = await onlineStudyCollection.find(query).toArray();
                 console.log(result)
                 res.send(result)
@@ -91,7 +92,15 @@ async function run() {
             // const cursor = onlineStudyCollection.find().toArray();
             // console.log(cursor)
             // res.send(cursor)
-           
+
+        })
+        //take assignment
+
+        app.post('/takeAssignment', async (req, res) => {
+            const takeAssignmentDetail = req.body;
+            const result = await takeAssignmentCollection.insertOne(takeAssignmentDetail)
+            console.log(result)
+            res.send(result);
         })
 
         // await client.db("admin").command({ ping: 1 });
