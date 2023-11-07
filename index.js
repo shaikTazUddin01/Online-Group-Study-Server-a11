@@ -37,13 +37,32 @@ async function run() {
             res.send(result)
         })
         app.get('/createAssignment/:id', async (req, res) => {
-            const id=req.params.id;
-            const query={_id:new ObjectId(id)}
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
             const result = await onlineStudyCollection.findOne(query);
             console.log(result)
             res.send(result)
         })
 
+        app.put('/createAssignment/:id', async (req, res) => {
+            const id = req.params.id;
+            const data = req.body
+            const filter = { _id: new ObjectId(id) };
+            const options = { upsert: true };
+            // Specify the update to set a value for the plot field
+            const updateDoc = {
+                $set: {
+                    title: data.title,
+                    PhotoUrl: data.PhotoUrl,
+                    assignmentLevel: data.assignmentLevel,
+                    mark: data.mark,
+                    discription: data.discription
+                },
+            };
+            const result = await onlineStudyCollection.updateOne(filter, updateDoc, options);
+            console.log(result)
+            res.send(result);
+        })
 
 
         // await client.db("admin").command({ ping: 1 });
