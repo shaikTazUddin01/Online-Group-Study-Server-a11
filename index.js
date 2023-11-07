@@ -96,9 +96,22 @@ async function run() {
         })
         //take assignment
 
-        app.post('/takeAssignment', async (req, res) => {
+        app.post('/submitedAssignment', async (req, res) => {
             const takeAssignmentDetail = req.body;
             const result = await takeAssignmentCollection.insertOne(takeAssignmentDetail)
+            console.log(result)
+            res.send(result);
+        })
+        
+        app.get('/submitedAssignment', async (req, res) => {
+            const result = await takeAssignmentCollection.find().toArray()
+            console.log(result)
+            res.send(result);
+        })
+        app.get('/myAssignment', async (req, res) => {
+            const email=req.query.email
+            const query={userEmail:email}
+            const result = await takeAssignmentCollection.find(query).toArray()
             console.log(result)
             res.send(result);
         })
