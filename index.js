@@ -43,6 +43,7 @@ async function run() {
             console.log(result)
             res.send(result)
         })
+       
         app.delete('/createAssignment/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
@@ -70,7 +71,28 @@ async function run() {
             console.log(result)
             res.send(result);
         })
-
+        // filter using level
+        app.get('/getAssignmentUsingLevel', async (req, res) => {
+            const level = req.query.assignmentLevel;
+            const query = { assignmentLevel: level }
+            console.log(query)
+            console.log(level)
+            // // let result=[]
+            if (level === 'all') {
+                const result = await onlineStudyCollection.find().toArray();
+                console.log(result)
+                res.send(result)
+                
+            }else{
+                const result = await onlineStudyCollection.find(query).toArray();
+                console.log(result)
+                res.send(result)
+            }
+            // const cursor = onlineStudyCollection.find().toArray();
+            // console.log(cursor)
+            // res.send(cursor)
+           
+        })
 
         // await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
