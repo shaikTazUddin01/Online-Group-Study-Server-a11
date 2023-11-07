@@ -43,6 +43,13 @@ async function run() {
             console.log(result)
             res.send(result)
         })
+        app.delete('/createAssignment/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await onlineStudyCollection.deleteOne(query);
+            console.log(result)
+            res.send(result)
+        })
 
         app.put('/createAssignment/:id', async (req, res) => {
             const id = req.params.id;
