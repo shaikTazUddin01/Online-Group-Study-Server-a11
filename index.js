@@ -102,15 +102,42 @@ async function run() {
             console.log(result)
             res.send(result);
         })
-        
+
         app.get('/submitedAssignment', async (req, res) => {
             const result = await takeAssignmentCollection.find().toArray()
             console.log(result)
             res.send(result);
         })
+        app.get('/submitedAssignment/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await takeAssignmentCollection.findOne(query)
+            console.log(result)
+            res.send(result);
+        })
+
+        app.put('/submitedAssignment/:id', async (req, res) => {
+            const id = req.params.id;
+            const updatedMark = req.body
+            const filter = { _id: new ObjectId(id) };
+
+            const options = { upsert: true };
+            // Specify the update to set a value for the plot field
+            const updateDoc = {
+                $set: {
+                    feedBack: updatedMark.feedBack,
+                    giveMark: updatedMark.giveMark,
+                    status:updatedMark.status
+                },
+            };
+            const result = await takeAssignmentCollection.updateOne(filter, updateDoc, options);
+            console.log(result)
+            res.send(result);
+        })
+
         app.get('/myAssignment', async (req, res) => {
-            const email=req.query.email
-            const query={userEmail:email}
+            const email = req.query.email
+            const query = { userEmail: email }
             const result = await takeAssignmentCollection.find(query).toArray()
             console.log(result)
             res.send(result);
