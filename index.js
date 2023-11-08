@@ -1,14 +1,37 @@
 const express = require('express');
 const cors = require('cors');
+var jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express()
+var cookieParser = require('cookie-parser')
 require('dotenv').config()
 const port = process.env.PORT || 5000
 //middleware
 app.use(express.json())
-app.use(cors())
+app.use(cookieParser())
+app.use(cors({
 
+    origin: ['http://localhost:5173'],
+    credentials: true
+}))
 
+//verify middleware
+const varifyToken = (req, res, next) => {
+    const token = req?.cookies?.token;
+    console.log("token middleware:", req.cookies.token)
+    if (!token) {
+      return res.status(401).send({ messages: 'unauthorized access' })
+    }
+    jwt.verify(token, process.env.JWT_Secret, (err, decoded) => {
+      if (err) {
+        return res.status(401).send({ messages: "unauthorized access" })
+      }
+      req.user = decoded;
+      next()
+    })
+    // next()
+  }
+  
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.25fgudl.mongodb.net/?retryWrites=true&w=majority`;
 
 const client = new MongoClient(uri, {
@@ -26,6 +49,25 @@ async function run() {
         const onlineStudyCollection = client.db('onlineStudy').collection('assignment')
         const takeAssignmentCollection = client.db('onlineStudy').collection('takeAssignment')
 
+        //auth related api
+        app.post('/jwt', async (req, res) => {
+            const user = req.body;
+            console.log("jwt token:", user)
+            var token = jwt.sign(user, process.env.JWT_Secret, { expiresIn: '1h' });
+            res.cookie('token', token, {
+                httpOnly: true,
+                secure: true,
+                sameSite: 'none'
+            })
+                .send({ success: true })
+            console.log(token)
+        })
+        app.post('/logout', async (req, res) => {
+            const user = req.body;
+            res.clearCookie('token', { maxAge: 0 }).send({ success: true })
+            console.log('logout', user)
+        })
+        //services related api
         app.post('/createAssignment', async (req, res) => {
             const newAssignment = req.body;
             const result = await onlineStudyCollection.insertOne(newAssignment)
@@ -33,7 +75,15 @@ async function run() {
             res.send(result)
         })
         app.get('/createAssignment', async (req, res) => {
-            const result = await onlineStudyCollection.find().toArray();
+            // console.log("pagination:",req.query)
+            // const page=parseInt(req.query.page);
+            // const size=parseInt(req.query.size);
+            // console.log(page)
+            // console.log(size)
+            const result = await onlineStudyCollection.find()
+                // .skip(page*size)
+                // .limit(size)
+                .toArray();
             console.log(result)
             res.send(result)
         })
@@ -98,6 +148,7 @@ async function run() {
 
         app.post('/submitedAssignment', async (req, res) => {
             const takeAssignmentDetail = req.body;
+
             const result = await takeAssignmentCollection.insertOne(takeAssignmentDetail)
             console.log(result)
             res.send(result);
@@ -127,7 +178,7 @@ async function run() {
                 $set: {
                     feedBack: updatedMark.feedBack,
                     giveMark: updatedMark.giveMark,
-                    status:updatedMark.status
+                    status: updatedMark.status
                 },
             };
             const result = await takeAssignmentCollection.updateOne(filter, updateDoc, options);
@@ -135,8 +186,13 @@ async function run() {
             res.send(result);
         })
 
-        app.get('/myAssignment', async (req, res) => {
+        app.get('/myAssignment',varifyToken, async (req, res) => {
+            console.log('token owner info',req.user)
             const email = req.query.email
+
+            if (req.user.email !== email) {
+                return res.status(403).send({messages:"forbiden"})
+            }
             const query = { userEmail: email }
             const result = await takeAssignmentCollection.find(query).toArray()
             console.log(result)
