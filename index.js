@@ -162,7 +162,7 @@ async function run() {
             res.send(result);
         })
 
-        app.get('/submitedAssignment', async (req, res) => {
+        app.get('/submitedAssignment',varifyToken, async (req, res) => {
             const result = await takeAssignmentCollection.find().toArray()
             console.log(result)
             res.send(result);
