@@ -9,9 +9,10 @@ const port = process.env.PORT || 5000
 //middleware
 app.use(express.json())
 app.use(cookieParser())
+
 app.use(cors({
 
-    origin: ['http://localhost:5173'],
+    origin: ['http://localhost:5173', 'https://online-group-study-86949.web.app', 'https://online-group-study-86949.firebaseapp.com'],
     credentials: true
 }))
 
@@ -20,18 +21,18 @@ const varifyToken = (req, res, next) => {
     const token = req?.cookies?.token;
     console.log("token middleware:", req.cookies.token)
     if (!token) {
-      return res.status(401).send({ messages: 'unauthorized access' })
+        return res.status(401).send({ messages: 'unauthorized access' })
     }
     jwt.verify(token, process.env.JWT_Secret, (err, decoded) => {
-      if (err) {
-        return res.status(401).send({ messages: "unauthorized access" })
-      }
-      req.user = decoded;
-      next()
+        if (err) {
+            return res.status(401).send({ messages: "unauthorized access" })
+        }
+        req.user = decoded;
+        next()
     })
     // next()
-  }
-  
+}
+
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.25fgudl.mongodb.net/?retryWrites=true&w=majority`;
 
 const client = new MongoClient(uri, {
@@ -75,18 +76,24 @@ async function run() {
             res.send(result)
         })
         app.get('/createAssignment', async (req, res) => {
-            // console.log("pagination:",req.query)
-            // const page=parseInt(req.query.page);
-            // const size=parseInt(req.query.size);
-            // console.log(page)
-            // console.log(size)
             const result = await onlineStudyCollection.find()
-                // .skip(page*size)
-                // .limit(size)
                 .toArray();
             console.log(result)
             res.send(result)
         })
+        app.get('/pagination', async (req, res) => {
+            const page = parseInt(req.query.page)
+            const size = parseInt(req.query.size)
+            console.log(page, size)
+            console.log(req.query)
+            const result = await onlineStudyCollection.find()
+                .skip(page * size)
+                .limit(size)
+                .toArray();
+            console.log(result)
+            res.send(result)
+        })
+
         app.get('/createAssignment/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
@@ -115,6 +122,7 @@ async function run() {
                     PhotoUrl: data.PhotoUrl,
                     assignmentLevel: data.assignmentLevel,
                     mark: data.mark,
+                    date: data.date,
                     discription: data.discription
                 },
             };
@@ -186,12 +194,15 @@ async function run() {
             res.send(result);
         })
 
-        app.get('/myAssignment',varifyToken, async (req, res) => {
-            console.log('token owner info',req.user)
+        app.get('/myAssignment', varifyToken, async (req, res) => {
+            console.log('token owner info', req.user)
             const email = req.query.email
+            const user = req.user.email
+            console.log("login:", email)
+            console.log("token:", user)
 
-            if (req.user.email !== email) {
-                return res.status(403).send({messages:"forbiden"})
+            if (user !== email) {
+                return res.status(403).send({ messages: "forbiden" })
             }
             const query = { userEmail: email }
             const result = await takeAssignmentCollection.find(query).toArray()
@@ -200,7 +211,7 @@ async function run() {
         })
 
         // await client.db("admin").command({ ping: 1 });
-        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+        // console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
         // Ensures that the client will close when you finish/error
         // await client.close();
