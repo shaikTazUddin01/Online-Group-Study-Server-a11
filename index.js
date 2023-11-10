@@ -69,6 +69,7 @@ async function run() {
             console.log('logout', user)
         })
         //services related api
+        
         app.post('/createAssignment', async (req, res) => {
             const newAssignment = req.body;
             const result = await onlineStudyCollection.insertOne(newAssignment)
@@ -161,8 +162,16 @@ async function run() {
             console.log(result)
             res.send(result);
         })
+        //verify token submited assignment
+        app.get('/submitedAssignment', varifyToken, async (req, res) => {
+            const email = req.query.email
+            const user = req.user.email
+            console.log("login:", email)
+            console.log("token:", user)
 
-        app.get('/submitedAssignment',varifyToken, async (req, res) => {
+            if (user !== email) {
+                return res.status(403).send({ messages: "forbiden" })
+            }
             const result = await takeAssignmentCollection.find().toArray()
             console.log(result)
             res.send(result);
@@ -193,7 +202,7 @@ async function run() {
             console.log(result)
             res.send(result);
         })
-
+        //varifytoken jwt my assignment
         app.get('/myAssignment', varifyToken, async (req, res) => {
             console.log('token owner info', req.user)
             const email = req.query.email
